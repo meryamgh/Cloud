@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat en temps réel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        #auth-container {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #message-form {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #messages-container {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .message-content {
+            word-wrap: break-word;
+        }
+
+        .author {
+            font-weight: bold;
+        }
+
+        .date {
+            color: #888;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button.logout {
+            background-color: #f44336;
+        }
+
+        button.logout:hover {
+            background-color: #da190b;
+        }
+
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        #logout-btn {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #logout-btn:hover {
+            background-color: #da190b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat en temps réel</h1>
+
+    <!-- Container pour l'authentification -->
+    <div id="auth-container">
+        <div id="login-form">
+            <h2>Connexion</h2>
+            <div class="form-group">
+                <label for="login-email">Email:</label>
+                <input type="email" id="login-email" required>
+            </div>
+            <div class="form-group">
+                <label for="login-password">Mot de passe:</label>
+                <input type="password" id="login-password" required>
+            </div>
+            <button onclick="login()">Se connecter</button>
+            <p>Pas encore de compte ? <a href="#" onclick="toggleAuthForms()">S'inscrire</a></p>
+        </div>
+
+        <div id="register-form" class="hidden">
+            <h2>Inscription</h2>
+            <div class="form-group">
+                <label for="register-email">Email:</label>
+                <input type="email" id="register-email" required>
+            </div>
+            <div class="form-group">
+                <label for="register-password">Mot de passe:</label>
+                <input type="password" id="register-password" required>
+            </div>
+            <button onclick="register()">S'inscrire</button>
+            <p>Déjà un compte ? <a href="#" onclick="toggleAuthForms()">Se connecter</a></p>
+        </div>
+    </div>
+
+    <!-- Zone d'information utilisateur et déconnexion -->
+    <div id="user-info" class="user-info hidden">
+        <span id="user-email"></span>
+        <button type="button" id="logout-btn" class="logout">Se déconnecter</button>
+    </div>
+
+    <!-- Container pour le formulaire de message -->
+    <div id="message-form" class="hidden">
+        <h2>Poster un message</h2>
+        <div class="form-group">
+            <label for="message-content">Votre message:</label>
+            <textarea id="message-content" rows="3" required></textarea>
+        </div>
+        <button onclick="postMessage()">Envoyer</button>
+    </div>
+
+    <!-- Container pour les messages -->
+    <div id="messages-container"></div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
