@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
 import { getFirestore, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -51,16 +51,54 @@ window.toggleAuthForms = function() {
     registerForm.classList.toggle('hidden');
 };
 
+function showMessage(message, isSuccess = false) {
+    const messageContainer = document.getElementById('message-container');
+    const messageText = document.getElementById('message-text');
+    
+    messageContainer.className = 'message-container';
+    messageContainer.classList.add(isSuccess ? 'success-message' : 'error-message');
+    messageContainer.classList.add('show');
+    
+    messageText.textContent = message;
+    
+    setTimeout(() => {
+        messageContainer.classList.remove('show');
+    }, 3000);
+}
+
 window.login = async function() {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
     try {
         await signInWithEmailAndPassword(auth, email, password);
-     //   alert('Connexion réussie !');
+        showMessage('Connexion réussie !', true);
     } catch (error) {
         console.error('Erreur de connexion:', error);
-     //   alert('Erreur lors de la connexion: ' + error.message);
+        let errorMessage = '';
+        
+        // Gestion des erreurs spécifiques
+        switch (error.code) {
+            case 'auth/user-not-found':
+                errorMessage = 'Aucun compte n\'existe avec cet email';
+                break;
+            case 'auth/wrong-password':
+                errorMessage = 'Mot de passe incorrect';
+                break;
+            case 'auth/invalid-email':
+                errorMessage = 'L\'adresse email n\'est pas valide';
+                break;
+            case 'auth/user-disabled':
+                errorMessage = 'Ce compte a été désactivé';
+                break;
+            case 'auth/too-many-requests':
+                errorMessage = 'Trop de tentatives de connexion. Veuillez réessayer plus tard';
+                break;
+            default:
+                errorMessage = 'Une erreur est survenue lors de la connexion';
+        }
+        
+        showMessage(errorMessage);
     }
 };
 
@@ -68,12 +106,46 @@ window.register = async function() {
     const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
 
+    // Vérification de la longueur du mot de passe
+    if (password.length < 6) {
+        showMessage('Le mot de passe doit contenir au moins 6 caractères');
+        return;
+    }
+
     try {
+        // Vérifier si l'utilisateur existe déjà
+        const methods = await fetchSignInMethodsForEmail(auth, email);
+        if (methods && methods.length > 0) {
+            showMessage('Un compte existe déjà avec cet email');
+            return;
+        }
+
+        // Si l'utilisateur n'existe pas, procéder à l'inscription
         await createUserWithEmailAndPassword(auth, email, password);
-     //   alert('Inscription réussie !');
+        showMessage('Inscription réussie !', true);
     } catch (error) {
         console.error('Erreur d\'inscription:', error);
-     //   alert('Erreur lors de l\'inscription: ' + error.message);
+        let errorMessage = '';
+        
+        // Gestion des erreurs spécifiques
+        switch (error.code) {
+            case 'auth/email-already-in-use':
+                errorMessage = 'Un compte existe déjà avec cet email';
+                break;
+            case 'auth/invalid-email':
+                errorMessage = 'L\'adresse email n\'est pas valide';
+                break;
+            case 'auth/operation-not-allowed':
+                errorMessage = 'L\'inscription par email/mot de passe n\'est pas activée';
+                break;
+            case 'auth/weak-password':
+                errorMessage = 'Le mot de passe est trop faible';
+                break;
+            default:
+                errorMessage = 'Une erreur est survenue lors de l\'inscription';
+        }
+        
+        showMessage(errorMessage);
     }
 };
 
@@ -91,7 +163,11 @@ window.deconnexion = async function() {
 
 window.postMessage = async function() {
     if (!auth.currentUser) {
-    //    alert('Vous devez être connecté pour poster un message');
+        const errorContainer = document.getElementById('error-container');
+        errorContainer.classList.add('show');
+        setTimeout(() => {
+            errorContainer.classList.remove('show');
+        }, 3000); // Le message disparaît après 3 secondes
         return;
     }
 
@@ -107,7 +183,12 @@ window.postMessage = async function() {
         document.getElementById('message-content').value = '';
     } catch (error) {
         console.error('Erreur d\'envoi du message:', error);
-       // alert('Erreur lors de l\'envoi du message: ' + error.message);
+        const errorContainer = document.getElementById('error-container');
+        errorContainer.textContent = 'Erreur lors de l\'envoi du message: ' + error.message;
+        errorContainer.classList.add('show');
+        setTimeout(() => {
+            errorContainer.classList.remove('show');
+        }, 3000);
     }
 };
 
@@ -168,6 +249,7 @@ onAuthStateChanged(auth, (user) => {
     const messageForm = document.getElementById('message-form');
     const userInfo = document.getElementById('user-info');
     const userEmail = document.getElementById('user-email');
+    const errorContainer = document.getElementById('error-container');
 
     if (user) {
         // Utilisateur connecté
@@ -175,6 +257,7 @@ onAuthStateChanged(auth, (user) => {
         messageForm.classList.remove('hidden');
         userInfo.classList.remove('hidden');
         userEmail.textContent = `Connecté en tant que : ${user.email}`;
+        errorContainer.classList.remove('show');
     } else {
         // Utilisateur déconnecté
         authContainer.classList.remove('hidden');
